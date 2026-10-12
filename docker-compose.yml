@@ -1,0 +1,71 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: project_evaluator
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d project_evaluator"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+
+  migrate:
+    build: .
+    command: ["node", "dist/db/migrate.js", "--seed"]
+    environment:
+      DATABASE_URL: postgres://postgres:postgres@postgres:5432/project_evaluator
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  api:
+    build: .
+    command: ["node", "dist/api/server.js"]
+    environment:
+      DATABASE_URL: postgres://postgres:postgres@postgres:5432/project_evaluator
+      PORT: 4200
+      JWT_SECRET: ${JWT_SECRET:-dev-only-secret-change-me-please-32b}
+      STORAGE_DIR: /data/objects
+      WORK_DIR: /data/work
+      LLM_PROVIDER: ${LLM_PROVIDER:-mock}
+      ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}
+    ports:
+      - "4200:4200"
+    volumes:
+      - objects:/data/objects
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://localhost:4200/healthz').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+
+  worker:
+    build: .
+    command: ["node", "dist/worker/main.js"]
+    environment:
+      DATABASE_URL: postgres://postgres:postgres@postgres:5432/project_evaluator
+      STORAGE_DIR: /data/objects
+      WORK_DIR: /data/work
+      LLM_PROVIDER: ${LLM_PROVIDER:-mock}
+      ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}
+      WORKER_CONCURRENCY: 2
+    volumes:
+      - objects:/data/objects
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+    deploy:
+      replicas: 1
+
+volumes:
+  pgdata:
+  objects:
