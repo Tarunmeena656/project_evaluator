@@ -1,9 +1,11 @@
 # AI-Powered Project Evaluation Platform — Backend Architecture
 
-**Assignment:** SDE-II Backend Architecture, AlmaBetter
-**Author:** Tarun Meena
-**Date:** 12 October 2026
-**Companion repository:** `project-evaluator/` (proof of concept: API, worker, LLM pipeline, schema, tests). File references below such as `src/pipeline/stages.ts` point into it.
+| | |
+|---|---|
+| **Assignment** | SDE-II Backend Architecture, AlmaBetter |
+| **Author** | Tarun Meena |
+| **Date** | 12 October 2026 |
+| **Companion repository** | [github.com/Tarunmeena656/project_evaluator](https://github.com/Tarunmeena656/project_evaluator) (proof of concept: API, worker, LLM pipeline, schema, tests). File references such as `src/pipeline/stages.ts` point into it. |
 
 ---
 
